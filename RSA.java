@@ -1,4 +1,4 @@
-package jmaxibus1184;
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +21,8 @@ public class RSA extends JFrame implements ActionListener {
     final JButton share_pk = new JButton("share pk");
     final JButton send = new JButton("send");
     final JButton receive = new JButton("receive");
+    final JButton sign = new JButton("sign");
+    final JButton checkSign = new JButton("check signature");
     public BigInteger[] my_pk = new BigInteger[2];
     public BigInteger[] kek_pk = new BigInteger[2];
     public BigInteger[] sk = new BigInteger[2];
@@ -31,7 +33,7 @@ public class RSA extends JFrame implements ActionListener {
         this.setSize(800, 500);
         this.setBounds((1920 - this.getWidth()) / 2, (1080 - this.getHeight()) / 2, this.getWidth(), this.getHeight());
 
-        this.setLayout(new GridLayout(2, 3));
+        this.setLayout(new GridLayout(2, 4));
 
         generate.addActionListener(this);
         store_pk.addActionListener(this);
@@ -39,6 +41,8 @@ public class RSA extends JFrame implements ActionListener {
         share_pk.addActionListener(this);
         send.addActionListener(this);
         receive.addActionListener(this);
+        sign.addActionListener(this);
+        checkSign.addActionListener(this);
 
         this.add(generate);
         this.add(store_pk);
@@ -46,7 +50,9 @@ public class RSA extends JFrame implements ActionListener {
         this.add(share_pk);
         this.add(send);
         this.add(receive);
-
+        this.add(sign);
+        this.add(checkSign);
+        
         this.setVisible(true);
 
         try {
@@ -148,6 +154,16 @@ public class RSA extends JFrame implements ActionListener {
         if (ev.getSource() == receive) {
             receive();
         }
+        if (ev.getSource() == sign) {
+        	sign();
+        }
+        if (ev.getSource() == checkSign) {
+        	if (kek_pk[0] == null) {
+                JOptionPane.showMessageDialog(this, "PLEASE LOAD KEK PK FIRST!", "ERROR", JOptionPane.ERROR_MESSAGE);
+            } else {
+                checkSign();
+            }
+        }
     }
 
     public void generate() {
@@ -222,7 +238,42 @@ public class RSA extends JFrame implements ActionListener {
 
 
         JOptionPane.showMessageDialog(this, message, "DECRYPTED MESSAGE", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    public void checkSign() {
+    	BigInteger n = kek_pk[0];
+    	BigInteger e = kek_pk[1];
+    	
+    	String signature = null;
+    	String content = JOptionPane.showInputDialog(null, "CONTENT");
+    	try {
+            signature = Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor).toString();
+        } catch (Exception scheiss) {
+            scheiss.printStackTrace();
+            System.exit(1);
+        }
+    	boolean sign_valid = content.equals(decrypt(n, e, signature));
+    	if(sign_valid) {
+    		JOptionPane.showMessageDialog(null,"The signature is correct");
+    	} else {
+    		JOptionPane.showMessageDialog(null,"DU KEK, DIE SIGNATUR IST FALSCH");
+    	}
+    }
+    
+    public void sign() {
+    	BigInteger n = sk[0];
+        BigInteger d = sk[1];
+        String content = JOptionPane.showInputDialog(null, "CONTENT");
+        if(content.length() >= 7*(size/32)) {
+            JOptionPane.showMessageDialog(null,"DU KEK, DER INHALT IST ZU LANG!");
 
+        }else {
+
+            String signature = encrypt(n, d, content).toString();
+
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clipboard.setContents(new StringSelection(signature), null);
+        }
     }
 
     public void storePk(BigInteger n, BigInteger e, String name) {
