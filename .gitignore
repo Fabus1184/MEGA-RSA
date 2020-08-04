@@ -1,5 +1,7 @@
+*
+!*.*
+# ONLY UNCOMMENT IF YOU WANT DIRECTORIES TO NOT BE IGNORED ANYMORE: !*/
 public_key
 private_key
 RSA.class
-bin/
 classpath
